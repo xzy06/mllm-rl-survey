@@ -23,18 +23,18 @@
 
 总奖励公式：
 
-\[ R_{\text{total}} = \mathbb{I}[R_{\text{format}}=1]\cdot\Big(w_{\text{format}}R_f + w_{\text{count}}R_c + w_{\text{accuracy}}R_a \mathbb{I}[R_{\text{accuracy}}=1]\,w_{\text{spatial}}R_s\Big) \]
+$$ R_{\text{total}} = \mathbb{I}[R_{\text{format}}=1]\cdot\Big(w_{\text{format}}R_f + w_{\text{count}}R_c + w_{\text{accuracy}}R_a \mathbb{I}[R_{\text{accuracy}}=1]\,w_{\text{spatial}}R_s\Big) $$
 
 四个分量逐个说明：
 
-- **格式奖励**（权重 \(w_{\text{format}}=0.1\)）：验证 `<scene>` 里的 JSON 可解析、每个物体有 ID 和 bbox、所有关系是合法的（主体-谓词-客体）三元组。这是硬门槛——格式不对整个奖励归零。
-- **计数奖励**（权重 \(w_{\text{count}}=0.2\)）：
-  \[ R_{\text{count}} = w_{\text{count}}\cdot\Big(\lambda_{\text{obj}}\cdot\max(0,\,1-\frac{|N_{\text{obj}}^{\text{pred}}-N_{\text{obj}}^{\text{gt}}|}{\max(N_{\text{obj}}^{\text{gt}},1)}) + \lambda_{\text{rel}}\cdot\max(0,\,1-\frac{|N_{\text{rel}}^{\text{pred}}-N_{\text{rel}}^{\text{gt}}|}{\max(N_{\text{rel}}^{\text{gt}},1)})\Big) \]
-  其中 \(\lambda_{\text{obj}}=0.7\)、\(\lambda_{\text{rel}}=0.3\)。同时惩罚多生成和漏生成——论文明确说，**没有它模型会 reward hacking**：为了蒙对空间奖励，疯狂多生成物体和关系。
-- **准确率奖励**（权重 \(w_{\text{accuracy}}=0.5\)）：最终答案与 ground truth 精确字符串匹配（数据集是多选题，所以匹配是确定性的）。权重最高，保证“先答对”优先。
-- **空间奖励**（权重 \(w_{\text{spatial}}=0.2\)）：**只有在答案正确时才计算**。预测物体和真实物体用匈牙利算法做二分图匹配，代价函数是 CIoU + 语义相似度：
-  \[ C(o_i^{\text{pred}}, o_j^{\text{gt}}) = \lambda_{\text{spatial}}(1-\text{IoU}(b_i,b_j)) + \lambda_{\text{semantic}}(1-\text{sim}(l_i,l_j)) \]
-  其中 \(\lambda_{\text{spatial}}=1.0\)、\(\lambda_{\text{semantic}}=2.0\)；奖励 = 匹配对平均 CIoU（CIoU 对不重叠框也提供稠密梯度，因为包含距离和宽高比项）。
+- **格式奖励**（权重 $w_{\text{format}}=0.1$）：验证 `<scene>` 里的 JSON 可解析、每个物体有 ID 和 bbox、所有关系是合法的（主体-谓词-客体）三元组。这是硬门槛——格式不对整个奖励归零。
+- **计数奖励**（权重 $w_{\text{count}}=0.2$）：
+  $$ R_{\text{count}} = w_{\text{count}}\cdot\Big(\lambda_{\text{obj}}\cdot\max(0,\,1-\frac{|N_{\text{obj}}^{\text{pred}}-N_{\text{obj}}^{\text{gt}}|}{\max(N_{\text{obj}}^{\text{gt}},1)}) + \lambda_{\text{rel}}\cdot\max(0,\,1-\frac{|N_{\text{rel}}^{\text{pred}}-N_{\text{rel}}^{\text{gt}}|}{\max(N_{\text{rel}}^{\text{gt}},1)})\Big) $$
+  其中 $\lambda_{\text{obj}}=0.7$、$\lambda_{\text{rel}}=0.3$。同时惩罚多生成和漏生成——论文明确说，**没有它模型会 reward hacking**：为了蒙对空间奖励，疯狂多生成物体和关系。
+- **准确率奖励**（权重 $w_{\text{accuracy}}=0.5$）：最终答案与 ground truth 精确字符串匹配（数据集是多选题，所以匹配是确定性的）。权重最高，保证“先答对”优先。
+- **空间奖励**（权重 $w_{\text{spatial}}=0.2$）：**只有在答案正确时才计算**。预测物体和真实物体用匈牙利算法做二分图匹配，代价函数是 CIoU + 语义相似度：
+  $$ C(o_i^{\text{pred}}, o_j^{\text{gt}}) = \lambda_{\text{spatial}}(1-\text{IoU}(b_i,b_j)) + \lambda_{\text{semantic}}(1-\text{sim}(l_i,l_j)) $$
+  其中 $\lambda_{\text{spatial}}=1.0$、$\lambda_{\text{semantic}}=2.0$；奖励 = 匹配对平均 CIoU（CIoU 对不重叠框也提供稠密梯度，因为包含距离和宽高比项）。
 - **Lexicographic gating（优先级）**：format ≻ {count, accuracy} ≻ spatial——先满足格式，再联合优化计数和准确率，空间奖励只在答案正确时生效。论文指出，不加这个门控，模型会过度优化中间的空间奖励而牺牲最终答案正确性。
 
 ### 3. STVQA-7K 数据集
@@ -48,7 +48,7 @@
 
 - 基座：Qwen2.5-VL-3B / 7B（全参数更新，**没有 SFT 冷启动**）+ Qwen3-VL-30B（LoRA rank 64）。
 - GRPO 在线 RL：每问采样 88 条 rollout，温度 1.0，上下文 16,384 tokens；rollout batch 512，global batch 128，训练 75 步（5 episodes）。
-- 超参：lr 1e-6，AdamW + bf16，权重衰减 1e-2，KL 惩罚系数 1e-2，clip 范围 \(\epsilon_l=0.2\)、\(\epsilon_h=0.3\)。
+- 超参：lr 1e-6，AdamW + bf16，权重衰减 1e-2，KL 惩罚系数 1e-2，clip 范围 $\epsilon_l=0.2$、$\epsilon_h=0.3$。
 - 输入分辨率 512×512 到 2048×2048（保细粒度空间信息）；4×H100，3B 约 13 小时、7B 约 15 小时。
 - 推理开销：场景子图平均只增加 ~120 tokens，几乎不拖慢推理。
 

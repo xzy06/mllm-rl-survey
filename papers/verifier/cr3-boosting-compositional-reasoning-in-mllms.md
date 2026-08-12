@@ -51,7 +51,7 @@ GRPO 的特点是不需要额外的价值网络（value network），而是对�
 - 用基于规则的奖励函数给每个回答打分（答对得分，答错不得分）
 - 将每个回答的优势定义为归一化后的奖励偏差：
 
-\[ \hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)} \]
+$$ \hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)} $$
 
 - 然后用 PPO 风格的目标函数优化策略，加上 KL 散度正则化防止模型跑偏
 

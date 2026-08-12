@@ -20,7 +20,7 @@
 
 模型输出：
 
-\[ y = \{\tau_1, \ldots, \tau_m, r, a^{\text{final}}\}, \quad \tau_i = \langle q_i, a_i, b_i \rangle \]
+$$ y = \{\tau_1, \ldots, \tau_m, r, a^{\text{final}}\}, \quad \tau_i = \langle q_i, a_i, b_i \rangle $$
 
 每个推理步骤是一个三元组 τ_i：子问题 q_i（这一步要验证什么）、中间答案 a_i（推断出的事实）、证据框 b_i = [x_min, y_min, x_max, y_max]（支撑证据在哪）。最后综合出推理路径 r（自然语言总结）+ 最终答案 a^final。每一步"问什么、答什么、看哪儿"都显式可查。
 
@@ -28,7 +28,7 @@
 
 预测三元组集合 D̂ = {τ̂_1,...,τ̂_m} 和参考三元组集合 D* = {τ*_1,...,τ*_n} 之间建二分图匹配，相似度矩阵每项：
 
-\[ S_{ij} = \frac{1}{4}\Big(E(\hat{b}_i, b_j^*) + \text{sim}_q(\hat{q}_i, q_j^*) + \text{sim}_a(\hat{a}_i, a_j^*) + \text{IoU}(\hat{b}_i, b_j^*)\Big) \]
+$$ S_{ij} = \frac{1}{4}\Big(E(\hat{b}_i, b_j^*) + \text{sim}_q(\hat{q}_i, q_j^*) + \text{sim}_a(\hat{a}_i, a_j^*) + \text{IoU}(\hat{b}_i, b_j^*)\Big) $$
 
 四个分量：
 - **E(b̂_i, b*_j)**：预测框存在且与参考证据区域兼容；
@@ -37,15 +37,15 @@
 
 m ≠ n 时把矩阵 padding 到 k×k（k = max(m,n)），解一对一匹配约束（每行每列至多一个匹配）：
 
-\[ X^* = \arg\max_X \sum_{i=1}^{k}\sum_{j=1}^{k} S_{ij} x_{ij}, \quad \text{s.t. } \sum_j x_{ij} \le 1,\ \sum_i x_{ij} \le 1 \]
+$$ X^* = \arg\max_X \sum_{i=1}^{k}\sum_{j=1}^{k} S_{ij} x_{ij}, \quad \text{s.t. } \sum_j x_{ij} \le 1,\ \sum_i x_{ij} \le 1 $$
 
 最终匈牙利得分：
 
-\[ S_{\text{HS}} = \frac{1}{\min(m,n)} \sum_{(i,j) \in \mathcal{M}} S_{ij} \]
+$$ S_{\text{HS}} = \frac{1}{\min(m,n)} \sum_{(i,j) \in \mathcal{M}} S_{ij} $$
 
 ### 第三步：总奖励（答案奖励被匈牙利奖励门控）
 
-\[ \mathcal{R} = \alpha \mathcal{R}_{\text{format}} + \beta \mathcal{R}_{\text{answer}} \cdot \mathcal{R}_{\text{HS}} \]
+$$ \mathcal{R} = \alpha \mathcal{R}_{\text{format}} + \beta \mathcal{R}_{\text{answer}} \cdot \mathcal{R}_{\text{HS}} $$
 
 - **格式奖励** R_format = 1/3(𝕀_pair + 𝕀_reason + 𝕀_final)：
   - 𝕀_pair = 𝟙[count(子问题标签) = count(子答案标签) ∧ count > 0]——子问题必须和子答案成对且至少一对；

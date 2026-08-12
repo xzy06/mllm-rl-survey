@@ -22,7 +22,7 @@
 
 给定问题 q 和图像 v，模型先从当前策略 π_θold 采样 G1=4 个 grounding rollouts，每个输出一个证据框 b_i ∈ ℝ⁴（轴对齐 bbox，左上/右下角坐标）：
 
-\[ \boldsymbol{b} = \{\boldsymbol{b}_i\}_{i=1}^{G_1} \sim \pi_{\theta_{\text{old}}}(\cdot \mid \boldsymbol{q}, \boldsymbol{v}), \quad G_1 = 4 \]
+$$ \boldsymbol{b} = \{\boldsymbol{b}_i\}_{i=1}^{G_1} \sim \pi_{\theta_{\text{old}}}(\cdot \mid \boldsymbol{q}, \boldsymbol{v}), \quad G_1 = 4 $$
 
 提示词要求模型把分析过程写在 `<think>` `</think>` 标签里、把 bbox 坐标以 `[x1,y1,x2,y2]` 格式写在 `<box>` `</box>` 标签里，并说明"可以多轮 grounding 细化区域，bbox 始终基于原图；如果不再需要更多视觉信息，可以直接输出 `<answer>`"。
 
@@ -32,7 +32,7 @@
 
 把每个证据框 b_i 裁剪出局部图像区域 e_i，与原图 + 问题一起送回模型，采样 G2=2 个 answer rollouts：
 
-\[ \boldsymbol{o}_i = \{\boldsymbol{o}_{i,j}\}_{j=1}^{G_2} \sim \pi_{\theta_{\text{old}}}(\cdot \mid \boldsymbol{q}, \boldsymbol{v}, \boldsymbol{e}_i), \quad G_2 = 2 \]
+$$ \boldsymbol{o}_i = \{\boldsymbol{o}_{i,j}\}_{j=1}^{G_2} \sim \pi_{\theta_{\text{old}}}(\cdot \mid \boldsymbol{q}, \boldsymbol{v}, \boldsymbol{e}_i), \quad G_2 = 2 $$
 
 每个证据框产出 2 条答案轨迹，共 G1·G2 = 8 条推理轨迹。作答阶段奖励 r^answer_i,j 由两部分组成：
 
@@ -45,7 +45,7 @@
 
 两阶段由同一个 GRPO 目标联合优化，advantage 在全部 8 条轨迹的奖励组内归一化：
 
-\[ A_{i,j} = \frac{r^{\text{answer}}_{i,j} - \text{mean}(\{r^{\text{answer}}_{i,j}\})}{\text{std}(\{r^{\text{answer}}_{i,j}\})} \]
+$$ A_{i,j} = \frac{r^{\text{answer}}_{i,j} - \text{mean}(\{r^{\text{answer}}_{i,j}\})}{\text{std}(\{r^{\text{answer}}_{i,j}\})} $$
 
 策略更新用标准 PPO 式 clip（ε 为超参）。**注意：论文消融发现不加 KL 约束反而更好**（Ground-R1-KL 80.0 vs Ground-R1 81.7）——作者解释：grounding-then-answering 范式与基座预训练的 vanilla QA 分布差异大，强 KL 对齐会阻碍模型适应中间 grounding 目标和任务奖励。
 

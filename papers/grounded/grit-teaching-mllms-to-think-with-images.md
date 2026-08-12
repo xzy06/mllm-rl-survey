@@ -41,7 +41,7 @@
 
 组内归一化优势（δ = 1e-8 防除零）：
 
-\[ A_i = \frac{r_i - \text{mean}\{r_1,\dots,r_N\}}{\text{std}\{r_1,\dots,r_N\} + \delta} \]
+$$ A_i = \frac{r_i - \text{mean}\{r_1,\dots,r_N\}}{\text{std}\{r_1,\dots,r_N\} + \delta} $$
 
 策略更新用标准 GRPO 目标（importance ratio clip + β·KL 惩罚）。
 

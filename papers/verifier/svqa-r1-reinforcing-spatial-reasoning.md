@@ -27,26 +27,26 @@
 
 空间推理是开放式回答（答案可能是“左边”、一段描述或数值），规则匹配会误伤语义正确但措辞不同的答案，所以用两个分量：
 
-- **格式奖励 \(r^f\)**：输出是否符合 `<think>...</think> <answer>...</answer>` 结构，二值（0/1）。
-- **语义奖励 \(r^s\)**：Sentence-BERT（all-MiniLM-L6-v2）编码预测与参考答案，算余弦相似度。能识别语义等价（GT 是 "couch"，预测 "sofa" 也高分），对距离、bbox 等数值答案也能度量数值差异。
-- 总奖励：\( r = \lambda_1 r^f + \lambda_2 r^s \)，权重 \(\lambda_1=\lambda_2=0.5\)。
+- **格式奖励 $r^f$**：输出是否符合 `<think>...</think> <answer>...</answer>` 结构，二值（0/1）。
+- **语义奖励 $r^s$**：Sentence-BERT（all-MiniLM-L6-v2）编码预测与参考答案，算余弦相似度。能识别语义等价（GT 是 "couch"，预测 "sofa" 也高分），对距离、bbox 等数值答案也能度量数值差异。
+- 总奖励：$ r = \lambda_1 r^f + \lambda_2 r^s $，权重 $\lambda_1=\lambda_2=0.5$。
 
 ### 3. Spatial-GRPO（核心贡献）
 
 基于两个人类空间认知观察：① 定量测量（距离）在镜像下不变；② 定性关系（in front of / next to）保持，而方向表达（left/right）需要对称调整。目标是让模型对原图和翻转图的回答语义一致。
 
-- 定义视图一致性差距：\(\Delta = \mathtt{Avg}(\{r_i^s\}_{i=1}^{G}) - \mathtt{Avg}(\{\hat{r}_i^s\}_{i=1}^{G})\)（原图组与翻转图组的语义奖励均值差）。
+- 定义视图一致性差距：$\Delta = \mathtt{Avg}(\{r_i^s\}_{i=1}^{G}) - \mathtt{Avg}(\{\hat{r}_i^s\}_{i=1}^{G})$（原图组与翻转图组的语义奖励均值差）。
 - 修改奖励：当某组得分显著高于另一组时，给高分组扣分：
-  \[ r_i^s = r_i^s - \eta\|\Delta\|, \quad \text{if } r_i^s > \delta \text{ and } \Delta \ge 0 \]
-  翻转组对称处理（\(\delta=0.5\) 阈值，\(\eta=1\) 惩罚系数）——逼两组奖励收敛，模型必须“两个视角都说对”才能拿到高分。
-- 优化目标：联合最大化原图+翻转图两组 rollouts 的期望奖励（\(\frac{1}{2G}\sum_{i=1}^{G}(R_i+\hat{R}_i)\)），PPO 式 clipped loss + KL 惩罚 \(\beta D_{\text{KL}}(\pi_\theta \| \pi_{\text{ref}})\)。
+  $$ r_i^s = r_i^s - \eta\|\Delta\|, \quad \text{if } r_i^s > \delta \text{ and } \Delta \ge 0 $$
+  翻转组对称处理（$\delta=0.5$ 阈值，$\eta=1$ 惩罚系数）——逼两组奖励收敛，模型必须“两个视角都说对”才能拿到高分。
+- 优化目标：联合最大化原图+翻转图两组 rollouts 的期望奖励（$\frac{1}{2G}\sum_{i=1}^{G}(R_i+\hat{R}_i)$），PPO 式 clipped loss + KL 惩罚 $\beta D_{\text{KL}}(\pi_\theta \| \pi_{\text{ref}})$。
 
 ### 4. 训练与评测设置
 
-- 基座：Qwen2.5-VL-3B；GRPO 组大小 \(G=8\)，最大生成长度 2048 tokens；梯度累积 2，每设备 batch 8；8×A6000。
+- 基座：Qwen2.5-VL-3B；GRPO 组大小 $G=8$，最大生成长度 2048 tokens；梯度累积 2，每设备 batch 8；8×A6000。
 - 训练数据：Vqasynth_Spacellava（28,000+ 多轮对话，拆成单轮 QA，含空间 VQA 与通用 VQA 混合）。
 - 评测：Q-Spatial++（87 张真实图像、101 个专家标注的水平距离问题）；OOD 泛化用 OpenSpaces（5,000 QA）。
-- 指标：success rate（\(\max(\text{GT}/\text{Pred},\text{Pred}/\text{GT}) < 2\) 算成功）、sMAPE（尺度不变误差）、mIoU 与 Accuracy@0.75（bbox 定位质量）、Yes/No 准确率。
+- 指标：success rate（$\max(\text{GT}/\text{Pred},\text{Pred}/\text{GT}) < 2$ 算成功）、sMAPE（尺度不变误差）、mIoU 与 Accuracy@0.75（bbox 定位质量）、Yes/No 准确率。
 
 ## 效果怎么样？
 

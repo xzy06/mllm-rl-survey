@@ -20,12 +20,12 @@ MLLM 越来越多地被用来执行**视觉工作流**，比如操作 GUI：下�
 
 ### 2. 逐层 VPIR 合成（每层四步）
 
-1. **选择关系策略 \(r_t\)**：约束主体如何转移（如“从物体到其属性”“从 GUI 状态到控件”）。
-2. **提取结构化事实 \(F_t\)**：类型化键值映射 \(\{(k, v_k)\}\)——key 是视觉属性维度（color、spatial_relation、count、gui_state），value 是类型化观察值（red、left-of、50、list-layout），以 JSON 兼容类型存储并暴露为变量。
-3. **生成 VPIR 谓词对 \((p_t, \tilde{p}_t)\)**：true-logic + 反事实 false-logic。在沙箱环境 \(\text{Env}(F_t)\) 中执行，**只允许白名单原语**（len、set、all、any、min/max/sum），保证确定性：
-   \[ \llbracket p \rrbracket(F_t) \triangleq \text{Exec}(p; \text{Env}(F_t)) \in \{0,1\} \]
+1. **选择关系策略 $r_t$**：约束主体如何转移（如“从物体到其属性”“从 GUI 状态到控件”）。
+2. **提取结构化事实 $F_t$**：类型化键值映射 $\{(k, v_k)\}$——key 是视觉属性维度（color、spatial_relation、count、gui_state），value 是类型化观察值（red、left-of、50、list-layout），以 JSON 兼容类型存储并暴露为变量。
+3. **生成 VPIR 谓词对 $(p_t, \tilde{p}_t)$**：true-logic + 反事实 false-logic。在沙箱环境 $\text{Env}(F_t)$ 中执行，**只允许白名单原语**（len、set、all、any、min/max/sum），保证确定性：
+   $$ \llbracket p \rrbracket(F_t) \triangleq \text{Exec}(p; \text{Env}(F_t)) \in \{0,1\} $$
    谓词只有在机械执行下成立才被接受——彻底排除逻辑不一致和不可验证的 claim。
-4. **LLM Translator 渲染**：把验证过的可执行逻辑翻译成自然语言条件文本（true 版 \(c_t\) + 反事实版 \(\tilde{c}_t\)），再做表达级验证（流畅、无歧义、忠于 VPIR 语义）。
+4. **LLM Translator 渲染**：把验证过的可执行逻辑翻译成自然语言条件文本（true 版 $c_t$ + 反事实版 $\tilde{c}_t$），再做表达级验证（流畅、无歧义、忠于 VPIR 语义）。
 
 ### 3. Planner / Verifier / Composer 分工
 

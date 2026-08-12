@@ -21,13 +21,13 @@
 
 模型输出必须是结构化序列：
 
-\[ y = [\text{SQ}_1, \text{SA}_1, \ldots, \text{SQ}_k, \text{SA}_k, \text{FA}] \]
+$$ y = [\text{SQ}_1, \text{SA}_1, \ldots, \text{SQ}_k, \text{SA}_k, \text{FA}] $$
 
 其中 SQ_i / SA_i 是第 i 个子问题/子答案，k（子问题数量）由模型自己决定，FA 是最终答案。System prompt 只给指令（"回答问题前先生成一系列子问题帮你看图，每个子问题看图给出答案，最后给最终答案"），**故意不给任何示例**——因为示例会让模型模仿特定分解模式，而不是自己探索。
 
 ### 第二步：奖励函数（极简二元）
 
-\[ R(y, a^*) = \begin{cases} 1.0 & \text{if Format}(y) \land \text{Correct}(y, a^*) \\ -1.0 & \text{otherwise} \end{cases} \]
+$$ R(y, a^*) = \begin{cases} 1.0 & \text{if Format}(y) \land \text{Correct}(y, a^*) \\ -1.0 & \text{otherwise} \end{cases} $$
 
 - **Format(y)**：至少有一对 "Sub-question / Answer"（标签匹配）；
 - **Correct(y, a*)**：**containment 匹配**——归一化后的 GT 答案必须是归一化后预测的子串（大小写不敏感）。
@@ -38,7 +38,7 @@
 
 选 GRPO 而不是 PPO：GRPO 不需要单独的 value network，内存需求减半，适合有限 GPU。对每个 prompt (I, q) 采样 G 个完成，组内归一化优势：
 
-\[ \hat{A}_i = \frac{R(y_i, a^*) - \mu_g}{\sigma_g} \]
+$$ \hat{A}_i = \frac{R(y_i, a^*) - \mu_g}{\sigma_g} $$
 
 策略更新带 KL 惩罚 β·D_KL(π_θ ∥ π_ref)，防止灾难性遗忘（模型可能在子问题格式上变好，但丢失底层视觉/语言能力）。
 
