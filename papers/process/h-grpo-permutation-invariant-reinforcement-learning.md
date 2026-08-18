@@ -58,7 +58,7 @@ $$ \mathcal{R} = \alpha \mathcal{R}_{\text{format}} + \beta \mathcal{R}_{\text{a
 
 ### 第四步：数据合成 + 训练
 
-- **可扩展数据合成管线**：自动生成带逐步 grounding 的推理轨迹（GVRS 数据集），无需大量人工标注；
+- **GVRS 数据合成管线**：GPT-4o 起草 + 人工校验 + SAM3 框精化构建 40 个金标准参考示例 → 3 个 LLM（GPT-4o、Gemini-3、Qwen3.5-Omni-Plus）生成 12 个候选系统提示、按组合奖励择优，扩出 10,000 条带逐步 grounding 的训练样本（来源：Visual7W、Visual-CoT、A-OKVQA、ERQA），人工抽查 100 例；
 - **两阶段训练**：先 SFT 一个 epoch（学输出格式 + grounded 分解的行为先验）→ 再 GRPO RL（G=8 rollouts/样本）；
 - **超参**：lr 5e-6、warm-up ratio 0.03、weight decay 0.01（两阶段相同）；
 - **基座**：Qwen2.5-VL-3B（强模型）+ SmolVLM-2.2B（小模型）——验证过程奖励对小模型是否更有用。
