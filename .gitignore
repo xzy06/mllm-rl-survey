@@ -2,3 +2,9 @@
 Desktop.ini
 .DS_Store
 .workbuddy/
+
+# Word/editor lock files and local temp builds
+~$*
+*.new
+*.tmp
+*.z
